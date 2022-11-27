@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
+import com.sun.xml.internal.ws.api.ha.StickyFeature;
 import uhf.linkage.Linkage;
 import uhf.structures.RwData;
 import uhf.utils.StringUtils;
@@ -42,8 +43,8 @@ public class GuestRegister {
             guestInfoPane.setViewportView(guestInfoTextArea);
             add(guestInfoPane);
             registerButton.addActionListener(e -> {
-                String user = (Integer.toHexString(new Random().nextInt(65535))
-                        + Integer.toHexString(new Random().nextInt(65535))).toUpperCase();
+                String user = (Integer.toHexString(65536 + new Random().nextInt(65535)).substring(1,5)
+                        + Integer.toHexString(65536 + new Random().nextInt(65535)).substring(1,5)).toUpperCase();
                 Map<String, String> registration = new HashMap<>();
                 registration.put(user, nameTextField.getText());
                 guestInfoTextArea.append(user + ", " + nameTextField.getText() + "\n");
