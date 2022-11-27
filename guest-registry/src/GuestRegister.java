@@ -83,6 +83,7 @@ public class GuestRegister {
                     i = Linkage.getInstance().initial("COM3");
                 } while (i!=0);
                 userWriteSync(entry.getKey());
+                Linkage.getInstance().deinit();
             }
             outputStream.flush();
             outputStream.close();
