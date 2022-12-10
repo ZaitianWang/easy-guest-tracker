@@ -4,8 +4,8 @@ import javax.swing.*;
 import javax.swing.border.LineBorder;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.regex.Pattern;
 
 public class GuestAnalyzerUi extends JFrame {
@@ -13,54 +13,43 @@ public class GuestAnalyzerUi extends JFrame {
     public static final int HEIGHT = 720;
     private JSONArray rfid = new JSONArray();
     private JSONArray temp = new JSONArray();
+
+    private final HashMap<String, Integer> map = new HashMap<>(); // rfid-temp map
+    private final ArrayList<String> list = new ArrayList<>(); // cur rfid list
     private final OneNetDataEnquirer enquirer = new OneNetDataEnquirer();
-    // top
     private final JLabel titleLabel = new JLabel("Guest Track Monitor", SwingConstants.CENTER);
     private final JPanel operationPanel = new JPanel();
     private final JLabel locationLabel = new JLabel("Location:");
     private final JTextField locationText = new JTextField("35379719");
     private final JButton connectButton = new JButton("Connect");
-    private final JButton searchButton = new JButton("Search");
+    private final JButton refreshButton = new JButton("Refresh");
     private final JButton clearButton = new JButton("Clear");
     private final JButton reportButton = new JButton("Report");
-    // left
-    // right
     private final JPanel dataPanel = new JPanel();
     private final JScrollPane anaDataPanel = new JScrollPane();
     private final JTable anaTable = new JTable();
+    private final JScrollPane visitorDataPanel = new JScrollPane();
+    private final JTable visitorTable = new JTable();
     private final DefaultTableModel anaTableModel = new DefaultTableModel(
             new Object[][]{
-                    {"Data", null, null, null, null},
-                    {null, null, null, null, null},
+                    {null, null, null},
             },
             new String[]{
-                    " ", "Max Temp", "People Count", "People Density", ""
+                    "Max Temperature", "Visitor Count", "Traffic Density"
             }
     );
-    private final JScrollPane rfidDataPanel = new JScrollPane();
-    private final JScrollPane tempDataPanel = new JScrollPane();
-    private final JTable rfidTable = new JTable();
-    private final JTable tempTable = new JTable();
-    private final DefaultTableModel rfidDataTableModel = new DefaultTableModel(
+    private final DefaultTableModel visitorDataTableModel = new DefaultTableModel(
             new Object[][]{
             },
             new String[]{
-                    "Time", "RFID"
-            });
-    private final DefaultTableModel tempDataTableModel = new DefaultTableModel(
-            new Object[][]{
-            },
-            new String[]{
-                    "Time", "Temp"
-            });
-
-
+                    "Visitor Name", "Registration Code", "Temperature"
+            }
+    );
     public GuestAnalyzerUi() {
         initFrame();
         initComponents();
         addActionListeners();
     }
-
     private void initFrame() {
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setResizable(false);
@@ -80,121 +69,129 @@ public class GuestAnalyzerUi extends JFrame {
         operationPanel.setLayout(null);
         operationPanel.setBorder(new LineBorder(Color.BLACK));
 
-        locationLabel.setBounds(20,10,60,30);
-        locationText.setBounds(80,10,120,30);
-        connectButton.setBounds(200,10,100,30);
+        locationLabel.setBounds(120,10,60,30);
+        locationText.setBounds(180,10,120,30);
+        connectButton.setBounds(300,10,100,30);
         operationPanel.add(locationLabel);
         operationPanel.add(locationText);
         operationPanel.add(connectButton);
 
-        searchButton.setBounds(750, 10, 80, 30);
-        clearButton.setBounds(850, 10, 80, 30);
-        reportButton.setBounds(950, 10, 80, 30);
-        operationPanel.add(searchButton);
+        refreshButton.setBounds(650, 10, 80, 30);
+        clearButton.setBounds(750, 10, 80, 30);
+        reportButton.setBounds(850, 10, 80, 30);
+        operationPanel.add(refreshButton);
         operationPanel.add(clearButton);
         operationPanel.add(reportButton);
 
         add(operationPanel);
 
-        dataPanel.setBounds(600, 150, 480, 500);
+        dataPanel.setBounds(40, 150, 1000, 500);
         dataPanel.setLayout(null);
         dataPanel.setBorder(new LineBorder(Color.BLACK));
 
-        anaDataPanel.setBounds(10, 10, 450, 60);
+        anaDataPanel.setBounds(140, 10, 720, 60);
         anaTable.setModel(anaTableModel);
         anaTable.setEnabled(false);
         anaTable.getTableHeader().setReorderingAllowed(false);
         anaDataPanel.setViewportView(anaTable);
         dataPanel.add(anaDataPanel);
 
-        rfidDataPanel.setBounds(10, 80, 220, 400);
-        rfidTable.setModel(rfidDataTableModel);
-        rfidTable.getColumnModel().getColumn(0).setPreferredWidth(208);
-        rfidTable.getTableHeader().setReorderingAllowed(false);
-        rfidDataPanel.setViewportView(rfidTable);
-        dataPanel.add(rfidDataPanel);
-
-        tempDataPanel.setBounds(240, 80, 220, 400);
-        tempTable.setModel(tempDataTableModel);
-        tempTable.getColumnModel().getColumn(0).setPreferredWidth(208);
-        tempTable.getTableHeader().setReorderingAllowed(false);
-        tempDataPanel.setViewportView(tempTable);
-        dataPanel.add(tempDataPanel);
+        visitorDataPanel.setBounds(140, 80, 720, 400);
+        visitorTable.setModel(visitorDataTableModel);
+        visitorTable.setEnabled(false);
+        visitorTable.getTableHeader().setReorderingAllowed(false);
+        visitorTable.setAlignmentX(CENTER_ALIGNMENT);
+        visitorTable.setAlignmentY(CENTER_ALIGNMENT);
+        visitorDataPanel.setViewportView(visitorTable);
+        dataPanel.add(visitorDataPanel);
 
         add(dataPanel);
     }
 
     private void addActionListeners() {
         connectButton.addActionListener(e -> connect());
-        searchButton.addActionListener(e -> {
+        refreshButton.addActionListener(e -> {
             clear();
             display();
         });
 
         clearButton.addActionListener(e -> clear());
 
-        reportButton.addActionListener(e -> save());
+        reportButton.addActionListener(e -> report());
     }
 
     private void connect() {
         enquirer.setDeviceId(locationText.getText());
     }
     private void display() {
-        JSONArray data = enquirer.enquiry(null, null, "temp1,hex");
-        JSONArray curData = enquirer.enquiry(null, null, "temp1,hex");
+        // get raw data
+        Date now = new Date();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss");
+        JSONArray data = enquirer.enquiry(dateFormat.format(now)+"T00:00:00",
+                dateFormat.format(now)+"T23:59:59", "temp1,hex");
         rfid = data.getJSONObject(0).getJSONArray("datapoints");
         temp = data.getJSONObject(1).getJSONArray("datapoints");
-        JSONArray curRfid = curData.getJSONObject(0).getJSONArray("datapoints");
-        JSONArray curTemp = curData.getJSONObject(1).getJSONArray("datapoints");
-        int maxTemp = -999999, peopleCount = 0;
-
-
-        Pattern pattern = Pattern.compile("\\d*");
-        for (int i = 0; i < rfid.size(); i++) {
-            rfidDataTableModel.addRow(new String[]{rfid.getJSONObject(i).get("at").toString(), rfid.getJSONObject(i).get("value").toString()});
-            peopleCount++;
+        JSONArray curData = enquirer.enquiry(
+                dateFormat.format(new Date(now.getTime()-300000))
+                        +"T"+timeFormat.format(new Date(now.getTime()-300000)),
+                dateFormat.format(now)+"T"+timeFormat.format(now),
+                "temp1,hex"); // cur = 5 min earlier to now
+        JSONArray curVisitor = new JSONArray();
+        if (curData.size() > 0) {
+            curVisitor = curData.getJSONObject(0).getJSONArray("datapoints");
         }
-        for (int i = 0; i < temp.size(); i++) {
-            if (!pattern.matcher( temp.getJSONObject(i).get("value").toString()).matches()) {
+        // prepare data to be displayed
+        int maxTemp = -273, peopleCountTotal = 0, peopleCountCurrent = 0;
+        // assume one temp for each rfid
+        for (int i = 0; i < rfid.size(); i++) {
+            if (!Pattern.compile("\\d*").matcher( temp.getJSONObject(i).get("value").toString()).matches()) {
+                // non-numeric value
                 continue;
             }
-            tempDataTableModel.addRow(new String[]{temp.getJSONObject(i).get("at").toString(), temp.getJSONObject(i).get("value").toString()});
-            int j = Integer.parseInt( temp.getJSONObject(i).get("value").toString());
-            if (j > maxTemp && j <46.5)
-                maxTemp = j;
+            String r = rfid.getJSONObject(i).getString("value");
+            int t = temp.getJSONObject(i).getInteger("value");
+            if (!map.containsKey(r)) {
+                // rfid first occurrence
+                peopleCountTotal++;
+                map.put(r, t);
+            } else {
+                if (map.get(r) < t && t < 46.5) {
+                    // a higher but valid temp
+                    map.replace(r, t);
+                }
+            }
+            if (t > maxTemp) {
+                maxTemp = t;
+            }
         }
-        anaTableModel.setValueAt(maxTemp, 0, 1);
-        anaTableModel.setValueAt(peopleCount, 0, 2);
-        anaTableModel.setValueAt(peopleCount/100, 0, 3);
+        for (int i = 0; i < curVisitor.size(); i++) {
+            String r = curVisitor.getJSONObject(i).getString("value");
+            if (!list.contains(r)){
+                peopleCountCurrent++;
+                list.add(r);
+            }
+        }
+        // put data to panel
+        anaTableModel.setValueAt(maxTemp, 0, 0);
+        anaTableModel.setValueAt(peopleCountTotal, 0, 1);
+        anaTableModel.setValueAt(peopleCountCurrent, 0, 2);
+        GuestInfo.update();
+        map.forEach((r, t) -> {
+            visitorDataTableModel.addRow(new String[]{GuestInfo.query(r), r, t.toString()});
+        });
     }
 
     private void clear() {
-        rfidDataTableModel.setRowCount(0);
-        tempDataTableModel.setRowCount(0);
-        for (int i = 0; i < 2; i++) {
-            for (int j = 1; j <= 4; j++) {
+        visitorDataTableModel.setRowCount(0);
+        for (int i = 0; i < anaTableModel.getRowCount(); i++) {
+            for (int j = 0; j < anaTableModel.getColumnCount(); j++) {
                 anaTableModel.setValueAt(null, i, j);
             }
         }
     }
 
-    private void save() {
-        if (temp.size() == 0 && rfid.size() == 0)
-            return;
-        Map<String, Integer> tempMap = new LinkedHashMap<>(), rfidMap = new LinkedHashMap<>();
-        Pattern pattern = Pattern.compile("\\d*");
-        for (int i = 0; i < temp.size(); i++) {
-            if (!pattern.matcher( temp.getJSONObject(i).get("value").toString()).matches()) {
-                continue;
-            }
-            tempMap.put( temp.getJSONObject(i).get("at").toString(), Integer.parseInt( temp.getJSONObject(i).get("value").toString()));
-        }
-        for (int i = 0; i < rfid.size(); i++) {
-            if (!pattern.matcher( rfid.getJSONObject(i).get("value").toString()).matches()) {
-                continue;
-            }
-            rfidMap.put( rfid.getJSONObject(i).get("at").toString(), Integer.parseInt( rfid.getJSONObject(i).get("value").toString()));
-        }
-        enquirer.exportEnquiryResult(tempMap, rfidMap);
+    private void report() {
+        enquirer.exportEnquiryResult(map);
     }
 }

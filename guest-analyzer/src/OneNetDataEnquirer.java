@@ -56,50 +56,39 @@ public class OneNetDataEnquirer {
         System.out.println("stream count: " + datastreams.size());
         return datastreams;
     }
-    public void exportEnquiryResult(Map<String, Integer> tempMap, Map<String, Integer> humMap) {
-        // generate file name
+    public void exportEnquiryResult(HashMap<String, Integer> map) {
+        // create file
+        File dir = new File("../report");
+        if (!dir.exists() && dir.mkdir()) {
+            System.out.println("visitor report directory created");
+        }
         Date date = new Date();
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd-hh-mm-ss-SSS");
-        // create files
-        String path = "data/";
-        File tempFile = new File(path + format.format(date) + "_temp.json");
-        File humFile = new File(path + format.format(date) + "_hum.json");
+        File reportFile = new File("../report/visitor_report_"+format.format(date)+".csv");
         try {
-            if (tempFile.createNewFile() && humFile.createNewFile()) {
-                System.out.println("data saved to disk");
+            if (!reportFile.exists() && reportFile.createNewFile()) {
+                System.out.println("visitor report file created");
+                BufferedWriter bw = new BufferedWriter(new FileWriter(reportFile));
+
+                bw.flush();
+                bw.close();
             }
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
         }
-        // write temp file
+        // write report file
         try {
-            BufferedWriter tempBw = new BufferedWriter(new FileWriter(tempFile));
-            tempBw.write("{\n\t\"temperature\": [\n");
-            for (Map.Entry<String, Integer> entry : tempMap.entrySet()) {
-                tempBw.write("\t\t{\n\t\t\t\"time\": \"" +
-                        entry.getKey() + "\",\n" +
-                        "\t\t\t\"value\": "+
-                        entry.getValue() + "\n\t},\n");
-            }
-            tempBw.write("]\n}");
-            tempBw.flush();
-            tempBw.close();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        // write hum file
-        try {
-            BufferedWriter humBw = new BufferedWriter(new FileWriter(humFile));
-            humBw.write("{\n\t\"humidity\": [\n");
-            for (Map.Entry<String, Integer> entry : humMap.entrySet()) {
-                humBw.write("\t\t{\n\t\t\t\"time\": \"" +
-                        entry.getKey() + "\",\n" +
-                        "\t\t\t\"value\": "+
-                        entry.getValue() + "\n\t\t},\n");
-            }
-            humBw.write("]\n}");
-            humBw.flush();
-            humBw.close();
+            BufferedWriter bw = new BufferedWriter(new FileWriter(reportFile));
+            bw.write("Name,RFID,Temperature\n");
+            map.forEach((r, t) -> {
+                try {
+                    bw.write(GuestInfo.query(r)+","+r+","+t.toString()+"\n");
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+            bw.flush();
+            bw.close();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

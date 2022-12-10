@@ -55,7 +55,7 @@ public class GuestRegister {
     }
     @SuppressWarnings("static-access")
     private void register(Map<String, String> registration) {
-        // create files
+        // create file
         File dir = new File("registration");
         if (!dir.exists() && dir.mkdir()) {
             System.out.println("guest registry directory created");

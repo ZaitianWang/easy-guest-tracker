@@ -8,8 +8,8 @@ import java.util.Random;
 public class TCP {
     public static void main(String[] args) {
         new TCP().send(
-                (Integer.toHexString(new Random().nextInt(65535))
-                        + Integer.toHexString(new Random().nextInt(65535))).toUpperCase());
+                (Integer.toHexString(65536 + new Random().nextInt(65535)).substring(1,5)
+                        + Integer.toHexString(65536 + new Random().nextInt(65535)).substring(1,5)).toUpperCase());
     }
     public TCP() {
     }
