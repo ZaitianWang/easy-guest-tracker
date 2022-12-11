@@ -7,7 +7,7 @@
 ## Components
 
 - [x] `arduino-code`
-- [ ] `guest-analyzer`
+- [x] `guest-analyzer`
 - [x] `guest-registry`
 - [x] `rfid2onenet`
 - [x] `onenet-script`
