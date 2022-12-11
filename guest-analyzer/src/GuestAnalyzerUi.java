@@ -11,9 +11,6 @@ import java.util.regex.Pattern;
 public class GuestAnalyzerUi extends JFrame {
     public static final int WIDTH = 1080;
     public static final int HEIGHT = 720;
-    private JSONArray rfid = new JSONArray();
-    private JSONArray temp = new JSONArray();
-
     private final HashMap<String, Integer> map = new HashMap<>(); // rfid-temp map
     private final ArrayList<String> list = new ArrayList<>(); // cur rfid list
     private final OneNetDataEnquirer enquirer = new OneNetDataEnquirer();
@@ -130,8 +127,8 @@ public class GuestAnalyzerUi extends JFrame {
         SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss");
         JSONArray data = enquirer.enquiry(dateFormat.format(now)+"T00:00:00",
                 dateFormat.format(now)+"T23:59:59", "temp1,hex");
-        rfid = data.getJSONObject(0).getJSONArray("datapoints");
-        temp = data.getJSONObject(1).getJSONArray("datapoints");
+        JSONArray rfid = data.getJSONObject(0).getJSONArray("datapoints");
+        JSONArray temp = data.getJSONObject(1).getJSONArray("datapoints");
         JSONArray curData = enquirer.enquiry(
                 dateFormat.format(new Date(now.getTime()-300000))
                         +"T"+timeFormat.format(new Date(now.getTime()-300000)),
@@ -153,8 +150,10 @@ public class GuestAnalyzerUi extends JFrame {
             int t = temp.getJSONObject(i).getInteger("value");
             if (!map.containsKey(r)) {
                 // rfid first occurrence
-                peopleCountTotal++;
-                map.put(r, t);
+                if (t > 30) {
+                    peopleCountTotal++;
+                    map.put(r, t);
+                }
             } else {
                 if (map.get(r) < t && t < 46.5) {
                     // a higher but valid temp
@@ -177,9 +176,7 @@ public class GuestAnalyzerUi extends JFrame {
         anaTableModel.setValueAt(peopleCountTotal, 0, 1);
         anaTableModel.setValueAt(peopleCountCurrent, 0, 2);
         GuestInfo.update();
-        map.forEach((r, t) -> {
-            visitorDataTableModel.addRow(new String[]{GuestInfo.query(r), r, t.toString()});
-        });
+        map.forEach((r, t) -> visitorDataTableModel.addRow(new String[]{GuestInfo.query(r), r, t.toString()}));
     }
 
     private void clear() {

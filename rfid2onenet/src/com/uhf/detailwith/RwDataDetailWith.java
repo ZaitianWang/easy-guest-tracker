@@ -6,7 +6,7 @@ import com.uhf.structures.RwData;
 
 public class RwDataDetailWith implements OnRwListener {
 
-	private static RwDataDetailWith rwDataDetailWith = new RwDataDetailWith();
+	private static final RwDataDetailWith rwDataDetailWith = new RwDataDetailWith();
 
 	public static RwDataDetailWith getInstance() {
 		return rwDataDetailWith;

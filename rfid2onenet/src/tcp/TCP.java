@@ -10,6 +10,7 @@ public class TCP {
         new TCP().send(
                 (Integer.toHexString(65536 + new Random().nextInt(65535)).substring(1,5)
                         + Integer.toHexString(65536 + new Random().nextInt(65535)).substring(1,5)).toUpperCase());
+//        new TCP().send("54D99EA3");
     }
     public TCP() {
     }

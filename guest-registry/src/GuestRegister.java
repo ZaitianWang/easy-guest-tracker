@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
-import com.sun.xml.internal.ws.api.ha.StickyFeature;
 import uhf.linkage.Linkage;
 import uhf.structures.RwData;
 import uhf.utils.StringUtils;
@@ -15,12 +14,12 @@ public class GuestRegister {
         new RegistryUi().setVisible(true);
     }
     private class RegistryUi extends JFrame {
-        JLabel title = new JLabel("Guest Registry", SwingConstants.CENTER);
-        JLabel nameLabel = new JLabel("Guest Name: ");
-        JTextField nameTextField = new JTextField("");
-        JButton registerButton = new JButton("Register");
-        JTextArea guestInfoTextArea = new JTextArea("");
-        JScrollPane guestInfoPane = new JScrollPane();
+        final JLabel title = new JLabel("Guest Registry", SwingConstants.CENTER);
+        final JLabel nameLabel = new JLabel("Guest Name: ");
+        final JTextField nameTextField = new JTextField("");
+        final JButton registerButton = new JButton("Register");
+        final JTextArea guestInfoTextArea = new JTextArea("");
+        final JScrollPane guestInfoPane = new JScrollPane();
         public RegistryUi() {
             setBounds(200, 100, 540, 480);
             setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);

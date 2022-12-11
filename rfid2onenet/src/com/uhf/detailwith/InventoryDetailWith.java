@@ -12,7 +12,7 @@ import com.uhf.utils.StringUtils;
 
 public class InventoryDetailWith implements OnInventoryListener {
 
-	private static InventoryDetailWith inventoryDetailWith = new InventoryDetailWith();
+	private static final InventoryDetailWith inventoryDetailWith = new InventoryDetailWith();
 	public static List<Map<String, Object>> list = new ArrayList<>();
 	public static Long startTime;
 	public static int tagCount;

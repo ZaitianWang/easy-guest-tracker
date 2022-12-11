@@ -3,7 +3,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.HashMap;
 import java.util.Map;
 
 public class HttpURLConnectionHelper {
@@ -75,18 +74,5 @@ public class HttpURLConnectionHelper {
         }
         return builder.toString();
     }
-//
-//    public static void main(String[] args) {
-//
-//        //url中的35379643替换为自己组对应的设备ID(登录OneNet控制台查看）
-//        String url ="http://api.heclouds.com/devices/35379643/datapoints";
-//
-//        //paras的名称和类型查看文档
-//        Map<String, String> params = new HashMap<>();
-//        params.put("start","2022-10-10T08:00:35");
-//        params.put("end","2022-11-07T08:00:35");
-//        String ret = sendGetRequest(url, params);
-//        System.out.println(ret);
-//    }
 }
 
