@@ -31,18 +31,18 @@ public class OneNetDataEnquirer {
     }
     public JSONArray enquiry(String start, String end, String streamId) {
         System.out.println(getUrl());
-        // create temp param map
-        Map<String, String> tmpParams = new HashMap<>(params);
+        // create param map
+        Map<String, String> params = new HashMap<>(this.params);
         if (start != null && !start.isEmpty())
-            tmpParams.put("start", start);
+            params.put("start", start);
         if (end != null && !end.isEmpty())
-            tmpParams.put("end", end);
+            params.put("end", end);
         if (streamId != null && !streamId.isEmpty())
-            tmpParams.put("datastream_id", streamId);
+            params.put("datastream_id", streamId);
         else
-            tmpParams.put("datastream_id", "temp1,hum1");
+            params.put("datastream_id", "temp1,hum1");
 
-        String ret = HttpURLConnectionHelper.sendGetRequest(getUrl(), tmpParams);
+        String ret = HttpURLConnectionHelper.sendGetRequest(getUrl(), params);
 
         // print original response body
         System.out.println(ret);
